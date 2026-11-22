@@ -52,7 +52,9 @@ This software is based in part on the work of the Independent JPEG Group.
 
 ### 바이너리 배포 전 확인할 사항
 
-RAW 처리 라이브러리 libopenraw는 현재 실행 파일에 정적으로 연결한다. 각 릴리스에는 LGPL·GPL 원문, 해당 버전의 라이브러리 소스, 수정한 라이브러리와 앱을 다시 연결하는 데 필요한 앱 소스 또는 오브젝트 및 빌드 방법이 필요하다. 배포 조건은 이용자의 재링크 및 라이브러리 수정 디버깅을 위한 역공학을 허용해야 한다. **앱 자체의 라이선스 또는 이에 해당하는 재링크 허용 조건은 첫 바이너리 공개 전에 저작권자가 확정해야 한다.** [LGPL v3 제4조](https://spdx.org/licenses/LGPL-3.0-or-later.html)
+RAW 처리 라이브러리 libopenraw는 현재 실행 파일에 정적으로 연결한다. 각 릴리스에는 LGPL·GPL 원문, 해당 버전의 라이브러리 소스, 수정한 라이브러리와 앱을 다시 연결하는 데 필요한 앱 소스 또는 오브젝트 및 빌드 방법이 필요하다. 배포 조건은 이용자의 재링크 및 라이브러리 수정 디버깅을 위한 역공학을 허용해야 한다. Photo Picker neo 자체 코드에는 아래의 제한적 이용 허락이 적용된다. [LGPL v3 제4조](https://spdx.org/licenses/LGPL-3.0-or-later.html)
+
+**Photo Picker neo 0.1.0 앱 코드 이용 허락.** 저작권자는 이 버전을 받은 이용자가 libopenraw를 수정하거나 교체하고, 그 라이브러리를 Photo Picker neo와 다시 결합하거나 링크하기 위해 필요한 범위에서 앱 소스와 오브젝트를 복제·수정·빌드하고, 생성한 앱을 설치·실행하는 것을 허용한다. 수정된 라이브러리를 디버깅하기 위한 역공학도 허용한다. 자체 코드의 그 밖의 권리는 저작권자가 보유한다. 제3자 구성요소에는 각각의 라이선스가 적용된다.
 
 릴리스 워크플로는 LGPL·MPL 패키지의 정확한 원본을 잠금 파일 체크섬으로 확인해 `third-party-sources.tar`로 첨부한다. 앱 코드는 같은 릴리스 태그의 소스 아카이브를 사용한다. libopenraw를 교체해 시험하려면 아카이브 안의 libopenraw `.crate`를 풀고 `src-tauri/Cargo.toml`의 `[patch.crates-io]`에 `libopenraw = { path = "/path/to/libopenraw" }`를 추가한다. 저장소 루트에서 `npm ci` 후 `npm run tauri dev`로 실행하거나 다음 명령으로 로컬 빌드한다.
 
