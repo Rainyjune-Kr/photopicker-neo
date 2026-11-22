@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <ImageIO/ImageIO.h>
+#include <dlfcn.h>
 
 // The caller owns the returned CFData. Only the display copy is encoded as JPEG.
 CFDataRef picker_heif_preview(const char *path, int edge, bool thumbnail) {
@@ -7,8 +8,9 @@ CFDataRef picker_heif_preview(const char *path, int edge, bool thumbnail) {
         NSURL *url = [NSURL fileURLWithFileSystemRepresentation:path isDirectory:NO relativeToURL:nil];
         CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)url, NULL);
         if (!source) return NULL;
-        size_t index = 0;
-        if (@available(macOS 10.14, *)) index = CGImageSourceGetPrimaryImageIndex(source);
+        // This Image I/O entry point is available from macOS 10.14.
+        size_t (*primaryIndex)(CGImageSourceRef) = dlsym(RTLD_DEFAULT, "CGImageSourceGetPrimaryImageIndex");
+        size_t index = primaryIndex ? primaryIndex(source) : 0;
         NSMutableDictionary *options = [@{
             (__bridge NSString *)kCGImageSourceThumbnailMaxPixelSize: @(edge),
             (__bridge NSString *)kCGImageSourceCreateThumbnailWithTransform: @YES
