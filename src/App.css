@@ -192,3 +192,8 @@ button:focus-visible { outline-offset: -2px; }
 @media (prefers-reduced-motion: reduce) { .focus-mode .dock-content { transition-duration: 0s; } }
 
 .copied-mark.partial { background: var(--surface); color: var(--warning); border: 1px solid currentColor; }
+
+.update-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.updates button { border-color: var(--control-line); }
+.updates p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.updates progress { width: min(14em, 50%); accent-color: var(--accent); }

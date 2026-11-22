@@ -4,6 +4,7 @@ mod library;
 mod picking;
 mod preview;
 mod shooting_info;
+mod updates;
 
 use serde::Serialize;
 use std::{path::PathBuf, sync::Mutex};
@@ -181,6 +182,7 @@ async fn copy_pick(
     path: String,
     mode: picking::Mode,
 ) -> Result<Vec<picking::Outcome>, String> {
+    let copy_guard = app.state::<updates::CopyGate>().start_copy()?;
     let (photo, dest) = {
         let state = app.state::<Mutex<Library>>();
         let lib = state.lock().map_err(|e| e.to_string())?;
@@ -200,6 +202,7 @@ async fn copy_pick(
         (photo, dest)
     };
     tauri::async_runtime::spawn_blocking(move || {
+        let _guard = copy_guard;
         let (image, raw) = photo.originals();
         picking::copy(image, raw, &dest, path.is_empty(), mode)
     })
@@ -213,9 +216,15 @@ pub fn run() {
     let builder = builder.menu(language::menu);
     builder
         .manage(Mutex::new(Library::default()))
+        .manage(updates::CopyGate::default())
+        .manage(updates::PendingUpdate::default())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             language::ui_language,
+            updates::check_update,
+            updates::download_update,
+            updates::install_update,
             choose_folder,
             preview,
             copy_pick,

@@ -1,4 +1,11 @@
 const english: Record<string, string> = {
+  "앱 업데이트": "App updates", "다운로드": "Download", "설치하고 재시작": "Install and restart",
+  "업데이트 확인": "Check for updates", "업데이트 확인 중…": "Checking for updates…", "최신 버전입니다.": "You’re up to date.",
+  "새 버전 사용 가능": "Update available", "다운로드 중…": "Downloading…", "다운로드 완료": "Download complete",
+  "복사 작업 완료 대기 중…": "Waiting for copies to finish…", "설치 후 재시작 중…": "Installing and restarting…",
+  "다시 시도": "Retry", "변경 사항": "Release notes", "다운로드 진행률": "Download progress",
+  "설정을 저장하거나 취소한 뒤 설치하세요.": "Save or discard your settings before installing.",
+  "업데이트 실패": "Update failed", "업데이트 설치를 준비 중입니다.": "Preparing to install an update.",
   "부분 복사됨": "Partially copied", "미리보기를 표시할 수 없습니다.": "Could not display the preview.",
   "{format} 복사됨": "{format} copied", "짝이 되는 {format} 없음": "No matching {format}",
   "{format} 동명 파일 있음": "{format} already exists", "{format} 복사 실패": "{format} copy failed",

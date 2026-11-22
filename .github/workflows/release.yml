@@ -1,0 +1,101 @@
+name: Draft desktop release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  bundle:
+    strategy:
+      # Both builds update the same draft latest.json.
+      max-parallel: 1
+      fail-fast: true
+      matrix:
+        include:
+          - runner: macos-latest
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
+            args: --target universal-apple-darwin --bundles app,dmg
+          - runner: windows-latest
+            targets: x86_64-pc-windows-msvc
+            args: --target x86_64-pc-windows-msvc --bundles nsis
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+      - name: Check release tag against the app version
+        shell: bash
+        run: node -e "if ('v'+require('./src-tauri/tauri.conf.json').version !== process.env.GITHUB_REF_NAME) process.exit(1)"
+      - name: Protect published assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null)" == false ]]; then
+            echo "This release is already public."
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm test
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib
+      - uses: actions/setup-python@v5
+        if: runner.os == 'macOS'
+        with:
+          python-version: '3.12'
+      - name: Verify notices and collect corresponding library sources
+        if: runner.os == 'macOS'
+        run: |
+          python3 scripts/notices.py --source-archive
+          git diff --exit-code -- src-tauri/third-party
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Photo Picker neo ${{ github.ref_name }}
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}
+      - name: Attach corresponding sources to the draft
+        if: runner.os == 'macOS'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" third-party-sources.tar --clobber
+  verify:
+    needs: bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check final update manifest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --pattern latest.json --dir "$RUNNER_TEMP"
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' > "$RUNNER_TEMP/release-assets.txt"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const read = name => readFileSync(join(process.env.RUNNER_TEMP, name), 'utf8');
+          const manifest = JSON.parse(read('latest.json'));
+          const assets = read('release-assets.txt').split(/\r?\n/);
+          if ('v' + manifest.version !== process.env.GITHUB_REF_NAME) throw Error('Incorrect update version');
+          for (const platform of ['darwin-aarch64', 'darwin-x86_64', 'windows-x86_64']) {
+            const entry = manifest.platforms[platform];
+            const filename = decodeURIComponent(new URL(entry.url).pathname.split('/').pop());
+            if (!entry.signature || !assets.includes(filename)) throw Error('Missing update for ' + platform);
+          }
+          if (!assets.includes('third-party-sources.tar')) throw Error('Missing library sources');
+          JS

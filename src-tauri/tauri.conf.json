@@ -30,6 +30,18 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": true,
+    "resources": [
+      "third-party/"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhFOEUyRjI5NEEwNzdFMDcKUldRSGZnZEtLUytPampZS29vK014RXpEZEU1eGV4VDJRbE9NOUI0ZHRTZjI0MjF4dlpvYjRrMWUK",
+      "endpoints": [
+        "https://github.com/Rainyjune-Kr/photopicker-neo/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

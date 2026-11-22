@@ -123,3 +123,37 @@ test("scrolling the virtual filmstrip loads visible thumbnails without changing 
   await until(() => q('.stage img[alt="shot-50.HIF"]'));
   assert.match(q(".status").textContent,/shot-50\.HIF/);
 });
+
+test("settings downloads on demand and waits for the installer after verification", async ctx => {
+  let finishDownload, beginInstall;
+  let checks = 0;
+  const {w,q,button} = await viewer(ctx, (cmd,args) => {
+    if (cmd === "preview") return new ArrayBuffer(1);
+    if (cmd === "plugin:app|version") return "0.1.0";
+    if (cmd === "check_update") { checks++; return {version:"0.1.1"}; }
+    if (cmd === "download_update") {
+      args.progress.onmessage({received:5,total:10});
+      return new Promise(resolve => { finishDownload = resolve; });
+    }
+    if (cmd === "install_update") {
+      beginInstall = () => args.installing.onmessage(null);
+      return new Promise(() => {});
+    }
+  });
+  w.__TAURI_INTERNALS__.transformCallback = () => 1;
+  button("설정").click();
+  await until(() => q(".updates button"));
+  assert.equal(checks, 0);
+  const click = () => q(".updates button").click();
+  click();
+  await until(() => q(".updates").textContent.includes("0.1.1"));
+  click();
+  await until(() => q(".updates progress")?.value === 5);
+  assert.equal(q(".updates progress").max, 10);
+  finishDownload();
+  await until(() => q(".updates button").textContent.includes("설치하고 재시작"));
+  click();
+  await until(() => q(".updates").textContent.includes("복사 작업 완료 대기"));
+  beginInstall();
+  await until(() => q(".updates").textContent.includes("설치 후 재시작 중"));
+});

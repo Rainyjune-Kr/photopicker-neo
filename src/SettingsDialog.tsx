@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { modes, saveSettings, type Destination, type Settings } from "./settings";
 
+import Updates, { type useUpdates } from "./Updates";
 import IconButton from "./IconButton";
 import { t } from "./i18n";
 import { applyTheme, themeLabels, type Theme } from "./theme";
 
-interface Props { initial: Settings; pick?: string; onClose: () => void }
+interface Props { updates: ReturnType<typeof useUpdates>; initial: Settings; pick?: string; onClose: () => void }
 
-export default function SettingsDialog({ initial, pick, onClose }: Props) {
+export default function SettingsDialog({ updates, initial, pick, onClose }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState(initial);
   const [error, setError] = useState("");
@@ -81,6 +82,7 @@ export default function SettingsDialog({ initial, pick, onClose }: Props) {
           </div>)}
           <IconButton icon="add" label={t("+ 목적지 추가")} onClick={add} />
         </fieldset>
+        <Updates model={updates} dirty={JSON.stringify(initial) !== JSON.stringify(draft)} />
       </div>
       {error && <p role="alert">{error}</p>}
       <footer><button type="button" onClick={cancel}>{t("취소")}</button><button className="save" disabled={choosing}>{t("저장")}</button></footer>

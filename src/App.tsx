@@ -7,9 +7,11 @@ import SettingsDialog from "./SettingsDialog";
 import { loadSettings, type Settings } from "./settings";
 import { t, backendMessage } from "./i18n";
 import IconButton from "./IconButton";
+import { useUpdates } from "./Updates";
 import "./App.css";
 
 export default function App() {
+  const updates = useUpdates();
   const [folder, setFolder] = useState<Folder | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -83,7 +85,7 @@ export default function App() {
         catch { setError(t("저장된 설정을 읽을 수 없습니다.")); }
       }} />
     </header>}
-    {settings && <SettingsDialog initial={settings} pick={folder?.pick} onClose={() => setSettings(null)} />}
+    {settings && <SettingsDialog updates={updates} initial={settings} pick={folder?.pick} onClose={() => setSettings(null)} />}
     {error && <p role="alert">{error}</p>}
     {folder && (folder.photos.length ? <Viewer key={folder.generation} folder={folder} infoOpen={infoOpen} focusMode={focusMode} toggleFocus={toggleFocus} focusKey={focusKey} /> :
       <p className="empty">{t("이 폴더에는 탐색할 JPEG, HEIF 또는 RAW가 없습니다.")}</p>)}
